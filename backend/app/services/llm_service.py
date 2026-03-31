@@ -1,22 +1,30 @@
-from transformers import pipeline
+import requests
 
-# load once
-generator = pipeline("text-generation", model="distilgpt2")
-
+OLLAMA_URL = "http://localhost:11434/api/generate"
 
 def generate_answer(context: str, query: str) -> str:
     prompt = f"""
-    You are a research assistant.
+You are a research assistant.
 
-    Context:
-    {context}
+Use the context below to answer the question clearly.
 
-    Question:
-    {query}
+Context:
+{context}
 
-    Answer:
-    """
+Question:
+{query}
 
-    result = generator(prompt, max_length=300, num_return_sequences=1)
+Answer:
+"""
 
-    return result[0]["generated_text"]
+    response = requests.post(
+        OLLAMA_URL,
+        json={
+            "model": "llama3",
+            "prompt": prompt,
+            "stream": False
+        }
+    )
+
+    data = response.json()
+    return data["response"]
