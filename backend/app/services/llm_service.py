@@ -1,12 +1,20 @@
-import requests
+import os
+from groq import Groq
+from dotenv import load_dotenv
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
+load_dotenv()
+
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def generate_answer(context: str, query: str) -> str:
     prompt = f"""
-You are a research assistant.
+You are a strict research assistant.
 
-Use the context below to answer the question clearly.
+ONLY answer using the provided context.
+DO NOT make up information.
+
+If the answer is not in the context, say:
+"I could not find relevant information in the provided documents."
 
 Context:
 {context}
@@ -17,14 +25,13 @@ Question:
 Answer:
 """
 
-    response = requests.post(
-        OLLAMA_URL,
-        json={
-            "model": "llama3",
-            "prompt": prompt,
-            "stream": False
-        }
+    response = client.chat.completions.create(
+        model="llama-3.1-8b-instant",  
+        messages=[
+            {"role": "system", "content": "You are a helpful AI assistant."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2
     )
 
-    data = response.json()
-    return data["response"]
+    return response.choices[0].message.content
